@@ -2,7 +2,7 @@
 
 * Integrantes
  
-Victor Putrich e Bruno Lippert
+** Victor Putrich e Bruno Lippert
 
 * Enunciado
 
