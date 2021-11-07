@@ -1,10 +1,9 @@
 # T3-Redes
 
-* Integrantes
- 
-** Victor Putrich e Bruno Lippert
+# Integrantes 
+Victor Putrich e Bruno Lippert
 
-* Enunciado
+# Enunciado
 
 O trabalho consiste em desenvolver um simulador de rede. O simulador deve receber como parâmetros de execução o nome de um arquivo de descrição de topologia (conforme formato especificado), um comando (ping ou traceroute), um nó origem e um nó destino. O simulador deve apresentar na saída as mensagens enviadas pelos nós e roteadores da topologia conforme o formato estabelecido.
 
