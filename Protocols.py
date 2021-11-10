@@ -6,7 +6,9 @@ from Topology import Routertable
 from Topology import Topology
 
 class Ethernet:
-    def __init__(self, MAC_dst, MAC_src, protocolType, data, crc):
+    def __init__(self, MAC_dst, MAC_src, protocolType, data, crc, src_name, dst_name):
+        self.src_name = src_name
+        self.dst_name = dst_name
         self.MAC_src = MAC_src
         self.MAC_dst = MAC_dst
         self.protocolType = protocolType # IP or ARP
@@ -15,6 +17,9 @@ class Ethernet:
 
     def isArp(self):
         return self.protocolType == "ARP"
+    
+    def isIp(self):
+        return self.protocolType == "IP"
 
     def unpack(self):
         return self.data
@@ -29,7 +34,7 @@ class Ethernet:
         return output
         
 class IP:
-    def __init__(self, IP_dst, IP_src, data, protocolType="ICMP", ttl=8):
+    def __init__(self, IP_src, IP_dst, data, protocolType="ICMP", ttl=8):
         self.IP_src = IP_src
         self.IP_dst = IP_dst
         self.data = data #ICMP
@@ -44,7 +49,6 @@ class ICMPType(Enum):
     CONSULTA = 2
 
 class ICMPCode(Enum):
-    DESTINATION_UNREACHBLE = 3
     TIME_EXEEDED = 11
     ECHO_REQUEST = 8
     ECHO_REPLY = 0
@@ -56,13 +60,11 @@ class ICMP:
     
 class ARP:
     def __init__(self, src_name, MAC_src, MAC_dst, IP_dst, IP_src, operation, dst_name=None):
-        self.src_name = src_name
         self.MAC_src  = MAC_src
         self.MAC_dst  = MAC_dst 
         self.IP_dst   = IP_dst
         self.IP_src    = IP_src
         self.operation = operation # 1 request 2 reply
-        self.dst_name = dst_name
 
     def isArpRequest(self):
         return self.operation == 1
@@ -94,3 +96,9 @@ def ARP_Request(src_node, dst_ip):
 
 def ARP_Reply(node, arp, dst_name):
     return ARP(node.name, node.mac, arp.MAC_src, arp.IP_src, node.ip_prefix, 2, dst_name=dst_name) # reply
+
+def ICMP_Echo_Request():
+   return ICMP(ICMPType.CONSULTA, ICMPCode.ECHO_REQUEST)
+
+def ICMP_Echo_Reply():
+   return ICMP(ICMPType.CONSULTA, ICMPCode.ECHO_REPLY)

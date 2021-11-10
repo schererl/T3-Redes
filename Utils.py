@@ -8,11 +8,7 @@ ip: 192.168.0.2 str_cidr: 24
     mask = [ int([11111111]), int([11111111]), int([11111111]), int([00000000]) ]
     result = ip & mask
 '''
-def apply_mask(ip__cidr):
-    aux = ip__cidr.split("/")
-    ip_addr = aux[0]
-    cidr = int(aux[1])
-    
+def apply_mask(ip_addr, cidr):
     mask_r = mask(cidr)
     ip = ip_addr.split(".")
     result = []
@@ -45,4 +41,10 @@ def mask(cidr):
     return mask_10
 
 def ipsAreInTheSameNetwork(ip1, ip2):
-    return apply_mask(ip1) == apply_mask(ip2)
+    # 127.255.52.10/17 127.255.53.15/16 
+    aux = ip1.split("/")
+    ip1, cidr1 = aux[0], aux[1]
+    aux = ip2.split("/")
+    ip2, cidr2 = aux[0], aux[1]
+    
+    return apply_mask(ip1, int(cidr1)) == apply_mask(ip2, int(cidr1))

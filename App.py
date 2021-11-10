@@ -22,8 +22,15 @@ topo = Topology(nodes, routersList, router_table)
 
 # print(topo)
 
-arp_packet = Protocols.ARP_Request(node1, node3.ip_prefix)
-eth_packet = Protocols.Ethernet(":FF", node1.mac, "ARP", arp_packet, None)
+arp_packet = Protocols.ARP_Request(node1, node2.ip_prefix)
+eth_packet = Protocols.Ethernet(":FF", node1.mac, "ARP", arp_packet, None, node1.name, node2.name)
+Network.send(eth_packet, topo)
+
+icmp_pkg = Protocols.ICMP_Echo_Request()
+ip_package = Protocols.IP(node1.ip_prefix, node2.ip_prefix, icmp_pkg)
+# O mac de destino tera que pegar do ARP reply ******IMPORTANTE**********
+eth_packet = Protocols.Ethernet("00:00:00:00:00:02", node1.mac, "IP", ip_package, None, node1.name, node2.name)
+
 Network.send(eth_packet, topo)
 # print(node1.arp_table)
 # print(router.arp_table)
