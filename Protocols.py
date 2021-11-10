@@ -55,13 +55,14 @@ class ICMP:
         self.code = code
     
 class ARP:
-    def __init__(self, src_name, MAC_src, MAC_dst, IP_dst, IP_src, operation):
+    def __init__(self, src_name, MAC_src, MAC_dst, IP_dst, IP_src, operation, dst_name=None):
         self.src_name = src_name
         self.MAC_src  = MAC_src
         self.MAC_dst  = MAC_dst 
         self.IP_dst   = IP_dst
         self.IP_src    = IP_src
-        self.operation = operation # 1 request 2 reply 
+        self.operation = operation # 1 request 2 reply
+        self.dst_name = dst_name
 
     def isArpRequest(self):
         return self.operation == 1
@@ -91,5 +92,5 @@ def ARP_Request(src_node, dst_ip):
         cidr = (src_node.ip_prefix.split("/"))[1] #apply src_node's mask at gateway's ip addr
         return ARP(src_node.name, src_node.mac, None, src_node.gateway + "/" + cidr, src_node.ip_prefix, 1)  #ARP Request to default Router
 
-def ARP_Reply(node, arp):
-    return ARP(node.name, node.mac, arp.MAC_src, arp.IP_src, node.ip_prefix, 2) # reply
+def ARP_Reply(node, arp, dst_name):
+    return ARP(node.name, node.mac, arp.MAC_src, arp.IP_src, node.ip_prefix, 2, dst_name=dst_name) # reply

@@ -20,13 +20,13 @@ router_table = Routertable( ["r1", "r1"], ["192.168.0.0/24", "192.168.1.0/24"], 
 
 topo = Topology(nodes, routersList, router_table)
 
-print(topo)
+# print(topo)
 
 arp_packet = Protocols.ARP_Request(node1, node3.ip_prefix)
 eth_packet = Protocols.Ethernet(":FF", node1.mac, "ARP", arp_packet, None)
 Network.send(eth_packet, topo)
-print(node1.arp_table)
-print(router.arp_table)
+# print(node1.arp_table)
+# print(router.arp_table)
 
 '''
 
