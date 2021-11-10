@@ -21,7 +21,6 @@ def apply_mask(ip__cidr):
         
     return '.'.join(result)
         
-
 def mask(cidr):
     mask_2 = []
     mask_10 = []
@@ -44,4 +43,6 @@ def mask(cidr):
     mask_10.append(bin_dec( ''.join( mask_2[-1] ) ))
             
     return mask_10
-    
+
+def ipsAreInTheSameNetwork(ip1, ip2):
+    return apply_mask(ip1) == apply_mask(ip2)

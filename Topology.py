@@ -17,12 +17,11 @@ class Topology:
 
         return output
 
-
 class Node:
     # IMPORTANT:
         # nodes must pass {} as parameter at arp_table the instance must be different for each node
         # routers.node_routers share the same arp_table so it passes a reference of the same instance
-    def __init__(self, name, mac, ip_prefix, mtu, gateway, arp_table):
+    def __init__(self, name, mac, ip_prefix, mtu, gateway, arp_table={}):
         self.name = name
         self.mac = mac
         self.ip_prefix = ip_prefix
