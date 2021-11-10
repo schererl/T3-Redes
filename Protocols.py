@@ -1,4 +1,5 @@
 import Utils
+from enum import Enum
 from Topology import Node
 from Topology import Router
 from Topology import Routertable
@@ -28,15 +29,31 @@ class Ethernet:
         return output
         
 class IP:
-    def __init__(self, IP_dst, IP_src, data, crc):
+    def __init__(self, IP_dst, IP_src, data, protocolType="ICMP", ttl=8):
         self.IP_src = IP_src
-        self.IP_src = IP_src
-        self.data = data    # ICMP 
-        self.crc =  crc     # Echo Request | Echo Reply 
+        self.IP_dst = IP_dst
+        self.data = data #ICMP
+        self.protocolType = protocolType
+        self.ttl = ttl
 
     def unpack(self):
         return self.data
 
+class ICMPType(Enum):
+    NOTIFICAO_DE_ERRO = 1
+    CONSULTA = 2
+
+class ICMPCode(Enum):
+    DESTINATION_UNREACHBLE = 3
+    TIME_EXEEDED = 11
+    ECHO_REQUEST = 8
+    ECHO_REPLY = 0
+
+class ICMP:
+    def __init__(self, typeMessage, code):
+        self.typeMessage = typeMessage 
+        self.code = code
+    
 class ARP:
     def __init__(self, src_name, MAC_src, MAC_dst, IP_dst, IP_src, operation):
         self.src_name = src_name

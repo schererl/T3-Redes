@@ -57,7 +57,7 @@ class Router:
         return output
 
 class Routertable:
-    def __init__(self, name, dest_prefix, nexthop ,port):
+    def __init__(self, name, dest_prefix, nexthop, port):
         self.name = name
         self.dest_prefix = dest_prefix
         self.nexthop = nexthop
