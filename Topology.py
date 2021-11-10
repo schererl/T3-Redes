@@ -42,9 +42,8 @@ class Router:
         self.node_routers = []
         self.arp_table = {} #this arp_table is the same for each intern_node instanced at "node_routers"
 
-        for i in range(len(node_routers)):
-            aux = node_routers[i]
-            self.node_routers.append(Node(name, aux[0], aux[1], "5", None, self.arp_table))
+        for router in node_routers:
+            self.node_routers.append(Node(name, router[0], router[1], "5", None, self.arp_table))
 
     def __str__(self):
         
