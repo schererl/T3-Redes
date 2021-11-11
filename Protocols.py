@@ -6,7 +6,7 @@ from Topology import Routertable
 from Topology import Topology
 
 class Ethernet:
-    def __init__(self, MAC_dst, MAC_src, protocolType, data, crc, src_name, dst_name):
+    def __init__(self, MAC_src, MAC_dst,  protocolType, data, crc, src_name, dst_name):
         self.src_name = src_name
         self.dst_name = dst_name
         self.MAC_src = MAC_src
@@ -59,7 +59,7 @@ class ICMP:
         self.code = code
     
 class ARP:
-    def __init__(self, src_name, MAC_src, MAC_dst, IP_dst, IP_src, operation, dst_name=None):
+    def __init__(self, src_name, MAC_src, MAC_dst, IP_src, IP_dst, operation, dst_name=None):
         self.MAC_src  = MAC_src
         self.MAC_dst  = MAC_dst 
         self.IP_dst   = IP_dst
@@ -89,13 +89,13 @@ def ARP_Request(src_node, dst_ip):
     
     # first, check if they are in the same network
     if Utils.ipsAreInTheSameNetwork(src_node.ip_prefix, dst_ip):
-        return ARP(src_node.name, src_node.mac, None, dst_ip, src_node.ip_prefix, 1) #ARP Request to destiny
-    else: #TODO: I believe that you cant send ARP to a node outside
-        cidr = (src_node.ip_prefix.split("/"))[1] #apply src_node's mask at gateway's ip addr
-        return ARP(src_node.name, src_node.mac, None, src_node.gateway + "/" + cidr, src_node.ip_prefix, 1)  #ARP Request to default Router
+        return ARP(src_node.name, src_node.mac, None, src_node.ip_prefix, dst_ip,  1) #ARP Request to destiny
+    #else: #TODO: I believe that you cant send ARP to a node outside
+    #    cidr = (src_node.ip_prefix.split("/"))[1] #apply src_node's mask at gateway's ip addr
+    #    return ARP(src_node.name, src_node.mac, None, src_node.gateway + "/" + cidr, src_node.ip_prefix, 1)  #ARP Request to default Router
 
 def ARP_Reply(node, arp, dst_name):
-    return ARP(node.name, node.mac, arp.MAC_src, arp.IP_src, node.ip_prefix, 2, dst_name=dst_name) # reply
+    return ARP(node.name, node.mac, arp.MAC_src, node.ip_prefix,, arp.IP_src, 2, dst_name=dst_name) # reply
 
 def ICMP_Echo_Request():
    return ICMP(ICMPType.CONSULTA, ICMPCode.ECHO_REQUEST)

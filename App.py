@@ -23,17 +23,40 @@ topo = Topology(nodes, routersList, router_table)
 # print(topo)
 
 arp_packet = Protocols.ARP_Request(node1, node2.ip_prefix)
-eth_packet = Protocols.Ethernet(":FF", node1.mac, "ARP", arp_packet, None, node1.name, node2.name)
+eth_packet = Protocols.Ethernet(node1.mac, ":FF", "ARP", arp_packet, None, node1.name, node2.name)
 Network.send(eth_packet, topo)
 
 icmp_pkg = Protocols.ICMP_Echo_Request()
 ip_package = Protocols.IP(node1.ip_prefix, node2.ip_prefix, icmp_pkg)
 # O mac de destino tera que pegar do ARP reply ******IMPORTANTE**********
-eth_packet = Protocols.Ethernet("00:00:00:00:00:02", node1.mac, "IP", ip_package, None, node1.name, node2.name)
+eth_packet = Protocols.Ethernet(node1.mac, node2.mac, "IP", ip_package, None, node1.name, node2.name)
 
 Network.send(eth_packet, topo)
-# print(node1.arp_table)
-# print(router.arp_table)
+
+def ping(node1, n2_ip):
+    dst_ip = None
+    # 1: node1 & node2_ip tão na mesma rede ?
+    if Utils.ipsAreInTheSameNetwork(node1.ip_prefix, n2_ip):
+        dst_ip = n2_ip
+    else:
+        dst_ip = node1.gateway
+
+
+    #     tem MAC?
+        if not dst_ip in node1.arp_table:
+    #     não -> send(ARP_REQUEST(n1.ip, n2.ip)) | send(ICMP_REQUEST(n1, n2))
+            arp_packet = Protocols.ARP_REQUEST(n1, dst_ip)
+    
+    #     sim -> send(ICMP_REQUEST(n1, n2))
+        ICMP_packet = Protocols.ICMP_Echo_Request()
+        IP_packet = IP(node1.ip_prefix, node2.ip_prefix, icmp_pkg)
+        Ethernet_packet = Ethernet(node1.mac, dst.mac, "IP", IP_packet, None, node1.name)
+        Network.send(Ethernet_packet)
+
+                                
+
+    
+
 
 '''
 

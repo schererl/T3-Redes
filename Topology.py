@@ -3,6 +3,19 @@ class Topology:
         self.nodes = nodes
         self.routers = routers
         self.routertable = routertable
+
+    def check_if_node_is_router(node):
+        for router in self.routers:
+            if node in router.node_routers:
+                return True
+        return False
+
+    def get_router_by_node(node):
+        for router in self.routers:
+            if node in router.node_routers:
+                return router
+        return None
+
     def __str__(self):
         output = "NODES: \n"
         for n in self.nodes:
