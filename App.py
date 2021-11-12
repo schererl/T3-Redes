@@ -7,10 +7,10 @@ from Topology import Router
 from Topology import Routertable
 from Topology import Topology
 
-node1 = Node("n1","00:00:00:00:00:01","192.168.0.2/24","5","192.168.0.1")
-node2 = Node("n2","00:00:00:00:00:02","192.168.0.3/24","5","192.168.0.1")
-node3 = Node("n3","00:00:00:00:00:03","192.168.1.2/24","5","192.168.1.1")
-node4 = Node("n4","00:00:00:00:00:04","192.168.1.3/24","5","192.168.1.1")
+node1 = Node("n1","00:00:00:00:00:01","192.168.0.2/24","5","192.168.0.1", {})
+node2 = Node("n2","00:00:00:00:00:02","192.168.0.3/24","5","192.168.0.1", {})
+node3 = Node("n3","00:00:00:00:00:03","192.168.1.2/24","5","192.168.1.1", {})
+node4 = Node("n4","00:00:00:00:00:04","192.168.1.3/24","5","192.168.1.1", {})
 nodes = [node1, node2, node3, node4]
 
 router = Router("r1", 2, [ ["00:00:00:00:00:05","192.168.0.1/24"], ["00:00:00:00:00:06", "192.168.1.1/24"] ] )
@@ -22,16 +22,31 @@ topo = Topology(nodes, routersList, router_table)
 
 # print(topo)
 
-arp_packet = Protocols.ARP_Request(node1, node2.ip_prefix)
-eth_packet = Protocols.Ethernet(node1.mac, ":FF", "ARP", arp_packet, None, node1.name, node2.name)
-Network.send(eth_packet, topo)
+#arp_packet = Protocols.ARP_Request(node1, node3.ip_prefix)
+#eth_packet = Protocols.Ethernet(node1.mac, ":FF", "ARP", arp_packet)
+#Network.send(eth_packet, topo)
+#print(node1.arp_table)
+#print(node3.arp_table)
+#print(routersList[0].node_routers[0].arp_table)
+
+
+
+
+ARP_packet = Protocols.ARP_Request(node1, node1.gateway + "/24")
+Ethernet_packet = Protocols.Ethernet(node1.mac, ":FF", "ARP", ARP_packet)
+Network.send(Ethernet_packet, topo)
+
+
+
 
 icmp_pkg = Protocols.ICMP_Echo_Request()
-ip_package = Protocols.IP(node1.ip_prefix, node2.ip_prefix, icmp_pkg)
+ip_package = Protocols.IP(node1.ip_prefix, node3.ip_prefix, "ICMP", icmp_pkg)
 # O mac de destino tera que pegar do ARP reply ******IMPORTANTE**********
-eth_packet = Protocols.Ethernet(node1.mac, node2.mac, "IP", ip_package, None, node1.name, node2.name)
+eth_packet = Protocols.Ethernet(node1.mac, node1.arp_table[node1.gateway+"/24"], "IP", ip_package)
 
 Network.send(eth_packet, topo)
+'''
+
 
 def ping(node1, n2_ip):
     dst_ip = None
@@ -50,7 +65,7 @@ def ping(node1, n2_ip):
     #     sim -> send(ICMP_REQUEST(n1, n2))
         ICMP_packet = Protocols.ICMP_Echo_Request()
         IP_packet = IP(node1.ip_prefix, node2.ip_prefix, icmp_pkg)
-        Ethernet_packet = Ethernet(node1.mac, dst.mac, "IP", IP_packet, None, node1.name)
+        Ethernet_packet = Ethernet(node1.mac, dst.mac, "IP", IP_packet)
         Network.send(Ethernet_packet)
 
                                 
@@ -60,6 +75,7 @@ def ping(node1, n2_ip):
 
 '''
 
+'''
 arp_packet = Protocols.ARP_Request(node2, node3.ip_prefix)
 eth_packet = Protocols.Ethernet(":FF", node2.mac, "ARP", arp_packet, None)
 Network.send(eth_packet, topo)

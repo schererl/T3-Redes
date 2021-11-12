@@ -40,6 +40,10 @@ def mask(cidr):
             
     return mask_10
 
+def getMask(ip):
+    aux = ip.split("/")
+    return "/" + aux[1]
+
 def ipsAreInTheSameNetwork(ip1, ip2):
     # 127.255.52.10/17 127.255.53.15/16 
     aux = ip1.split("/")
