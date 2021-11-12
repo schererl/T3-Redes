@@ -34,16 +34,15 @@ class Node:
     # IMPORTANT:
         # nodes must pass {} as parameter at arp_table the instance must be different for each node
         # routers.node_routers share the same arp_table so it passes a reference of the same instance
-    def __init__(self, name, mac, ip_prefix, mtu, gateway, arp_table):
+    def __init__(self, name, mac, ip_prefix, gateway, arp_table):
         self.name = name
         self.mac = mac
         self.ip_prefix = ip_prefix
-        self.mtu = mtu
         self.gateway = gateway
         self.arp_table = arp_table 
 
     def __str__(self):
-        output = "<" + self.name + "><" + str(self.mac) + "><" + str(self.ip_prefix) + "><" + str(self.mtu) + "><" + str(self.gateway) + ">"
+        output = "<" + self.name + "><" + str(self.mac) + "><" + str(self.ip_prefix) + "><" + str(self.gateway) + ">"
         for elem in self.arp_table:
             output+= elem + '\n'
         return output
@@ -56,7 +55,7 @@ class Router:
         self.arp_table = {} #this arp_table is the same for each intern_node instanced at "node_routers"
 
         for router in node_routers:
-            self.node_routers.append(Node(name, router[0], router[1], "5", None, self.arp_table))
+            self.node_routers.append(Node(name, router[0], router[1], None, self.arp_table))
 
     def __str__(self):
         
