@@ -8,8 +8,6 @@ from Topology import Routertable
 from Topology import Topology
 
 #TODO: testes a fazer
-#   1 HOP
-#   2 ver se retorna TIME_OUT quando ttl = 0
 #   3 perguntar pro professor sobre subredes e uso de máscaras nos gateways
 
 '''
@@ -49,6 +47,7 @@ topo = Topology(nodes, routersList, router_table)
 
 
 ''' EXEMPLO COM TIMEOUT '''
+'''
 ARP_packet = Protocols.ARP_Request(node1, node1.gateway + "/17")
 Ethernet_packet = Protocols.Ethernet(node1.mac, ":FF", "ARP", ARP_packet)
 Network.send(Ethernet_packet, topo)
@@ -56,9 +55,9 @@ icmp_pkg = Protocols.ICMP_Echo_Request()
 ip_package = Protocols.IP(node1.ip_prefix, node2.ip_prefix, "ICMP", icmp_pkg, ttl=1)
 eth_packet = Protocols.Ethernet(node1.mac, node1.arp_table[node1.gateway + "/17"], "IP", ip_package)
 Network.send(eth_packet, topo)
-
-''' EXEMPLO SEM TIMEOUT '''
 '''
+''' EXEMPLO SEM TIMEOUT '''
+
 ARP_packet = Protocols.ARP_Request(node1, node1.gateway + "/17")
 Ethernet_packet = Protocols.Ethernet(node1.mac, ":FF", "ARP", ARP_packet)
 Network.send(Ethernet_packet, topo)
@@ -66,7 +65,7 @@ icmp_pkg = Protocols.ICMP_Echo_Request()
 ip_package = Protocols.IP(node1.ip_prefix, node2.ip_prefix, "ICMP", icmp_pkg)
 eth_packet = Protocols.Ethernet(node1.mac, node1.arp_table[node1.gateway + "/17"], "IP", ip_package)
 Network.send(eth_packet, topo)
-'''
+
 
 
 '''
@@ -75,10 +74,10 @@ Network.send(eth_packet, topo)
 def ping(node1, n2_ip):
     dst_ip = None
     # 1: node1 & node2_ip tão na mesma rede ?
-    if Utils.ipsAreInTheSameNetwork(node1.ip_prefix, n2_ip):
+    if Utils.ipsAreInTheSameNetwork(node1.ip_prefix, n2_ip): obs: aqui vai precisar verificar se está na mesma rede
         dst_ip = n2_ip
     else:
-        dst_ip = node1.gateway
+        dst_ip = node1.gateway #aqui o .gateway tem que concatenar com a máscara fiz no Utils um método
 
 
     #     tem MAC?
