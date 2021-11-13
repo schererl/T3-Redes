@@ -1,3 +1,8 @@
+from Topology import Node
+from Topology import Router
+from Topology import Routertable
+from Topology import Topology
+
 def bin_dec(bin):
     decimal = int(bin, 2)
     return decimal
@@ -52,3 +57,53 @@ def ipsAreInTheSameNetwork(ip1, ip2):
     ip2, cidr2 = aux[0], aux[1]
     
     return apply_mask(ip1, int(cidr1)) == apply_mask(ip2, int(cidr1))
+
+def readTopologyFile(filePath):
+    nodesList = []
+    routersList = []
+    routerTable = None
+    nodesNames = {}
+
+    f = open(filePath, 'r')
+
+    # Nodes loader
+    line = f.readline()
+    while True:
+        line = f.readline().replace("\n", "")
+        if line == "#ROUTER":
+            break
+        n = line.split(",")
+        nodesList.append(Node(n[0], n[1], n[2], n[3], {}))
+        nodesNames[n[1]] = n[0]
+
+    # Routers loader
+    while True:
+        line = f.readline().replace("\n", "")
+        if line == "#ROUTERTABLE":
+            break
+        r = line.split(",")
+        macIpList = []
+        for i in range(2, len(r), 2):
+            macIpList.append([r[i], r[i+1]])
+            nodesNames[r[i]] = r[0]
+
+        routersList.append(Router(r[0], r[1], macIpList))
+
+    # RouterTable loader
+    routsNames = []
+    routsIps = []
+    routsHops = []
+    routsPorts = []
+    while True:
+        line = f.readline().replace("\n", "")
+        if not line:
+            break
+        r = line.split(",")
+
+        routsNames.append(r[0])
+        routsIps.append(r[1])
+        routsHops.append(r[2])
+        routsPorts.append(r[3])
+    
+    routerTable = Routertable(routsNames, routsIps, routsHops, routsPorts)
+    return Topology(nodesList, routersList, routerTable, nodesNames)

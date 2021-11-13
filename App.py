@@ -7,6 +7,9 @@ from Topology import Router
 from Topology import Routertable
 from Topology import Topology
 
+
+topo = Utils.readTopologyFile("topologia.txt")
+
 #TODO: testes a fazer
 #   3 perguntar pro professor sobre subredes e uso de máscaras nos gateways
 
@@ -27,23 +30,31 @@ r2,160.10.0.0/17,  0.0.0.0,0
 r2,240.20.0.0/16,  0.0.0.0,1
 '''
 
-node1 = Node("n1","00:00:00:00:00:01","160.10.128.10/17","160.10.128.1", {})
-node2 = Node("n2","00:00:00:00:00:02","240.20.10.10/16" ,"240.20.0.1", {})
-node3 = Node("n3","00:00:00:00:00:03","160.10.128.11/17","160.10.128.1", {})
-nodes = [node1, node2, node3]
+# node1 = Node("n1","00:00:00:00:00:01","160.10.128.10/17","160.10.128.1", {})
+# node2 = Node("n2","00:00:00:00:00:02","240.20.10.10/16" ,"240.20.0.1", {})
+# node3 = Node("n3","00:00:00:00:00:03","160.10.128.11/17","160.10.128.1", {})
+# nodes = [node1, node2, node3]
 
-router = Router("r1", 2, [ ["00:00:00:00:00:10","160.10.128.1/17"], ["00:00:00:00:00:11","160.10.0.2/17"] ] )
-router2 = Router("r2", 2,[ ["0:00:00:00:00:20" ,"160.10.0.1/17"],   ["00:00:00:00:00:21","240.20.0.1/16"] ] )
-routersList = [router, router2]
+# router = Router("r1", 2, [ ["00:00:00:00:00:10","160.10.128.1/17"], ["00:00:00:00:00:11","160.10.0.2/17"] ] )
+# router2 = Router("r2", 2,[ ["00:00:00:00:00:20" ,"160.10.0.1/17"],   ["00:00:00:00:00:21","240.20.0.1/16"] ] )
+# routersList = [router, router2]
 
-router_table = Routertable( ["r1", "r1", "r1", "r2", "r2", "r2"], 
-                            ["160.10.128.0/17", "160.10.0.0/17",  "240.20.0.0/16",  "160.10.128.0/17","160.10.0.0/17",  "240.20.0.0/16"], 
-                            ["0.0.0.0","0.0.0.0", "160.10.0.1", "160.10.0.2", "0.0.0.0", "0.0.0.0"], 
-                            ["0","1","1","0","0","1"] )
+# router_table = Routertable( ["r1", "r1", "r1", "r2", "r2", "r2"], 
+#                             ["160.10.128.0/17", "160.10.0.0/17",  "240.20.0.0/16",  "160.10.128.0/17","160.10.0.0/17",  "240.20.0.0/16"], 
+#                             ["0.0.0.0","0.0.0.0", "160.10.0.1", "160.10.0.2", "0.0.0.0", "0.0.0.0"], 
+#                             ["0","1","1","0","0","1"] )
 
-topo = Topology(nodes, routersList, router_table)
+# nodes_names = {
+#     "00:00:00:00:00:01": "n1",
+#     "00:00:00:00:00:02": "n2",
+#     "00:00:00:00:00:03": "n3",
+#     "00:00:00:00:00:10": "r1",
+#     "00:00:00:00:00:11": "r1",
+#     "00:00:00:00:00:20": "r2",
+#     "00:00:00:00:00:21": "r2"
+# }
 
-
+# topo = Topology(nodes, routersList, router_table, nodes_names)
 
 
 ''' EXEMPLO COM TIMEOUT '''
@@ -58,13 +69,13 @@ Network.send(eth_packet, topo)
 '''
 ''' EXEMPLO SEM TIMEOUT '''
 
-ARP_packet = Protocols.ARP_Request(node1, node1.gateway + "/17")
-Ethernet_packet = Protocols.Ethernet(node1.mac, ":FF", "ARP", ARP_packet)
-Network.send(Ethernet_packet, topo)
-icmp_pkg = Protocols.ICMP_Echo_Request()
-ip_package = Protocols.IP(node1.ip_prefix, node2.ip_prefix, "ICMP", icmp_pkg)
-eth_packet = Protocols.Ethernet(node1.mac, node1.arp_table[node1.gateway + "/17"], "IP", ip_package)
-Network.send(eth_packet, topo)
+# ARP_packet = Protocols.ARP_Request(node1, node1.gateway + "/17")
+# Ethernet_packet = Protocols.Ethernet(node1.mac, ":FF", "ARP", ARP_packet)
+# Network.send(Ethernet_packet, topo)
+# icmp_pkg = Protocols.ICMP_Echo_Request()
+# ip_package = Protocols.IP(node1.ip_prefix, node2.ip_prefix, "ICMP", icmp_pkg)
+# eth_packet = Protocols.Ethernet(node1.mac, node1.arp_table[node1.gateway + "/17"], "IP", ip_package)
+# Network.send(eth_packet, topo)
 
 
 

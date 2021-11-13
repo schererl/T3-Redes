@@ -16,7 +16,7 @@ def sendArp(pkg, topology):
     
     # send for every node at the same network ARP REQUEST
     if pkg.MAC_dst == ":FF": # mac_broadcast:
-        #print("Note over "+ pkg.src_name +" : ARP Request<br/>Who has "+ arp.IP_dst.split("/")[0] +"? Tell "+ arp.IP_src.split("/")[0])
+        print("Note over "+ topology.nodes_names[pkg.MAC_src] +" : ARP Request<br/>Who has "+ arp.IP_dst.split("/")[0] +"? Tell "+ arp.IP_src.split("/")[0])
         for n in topology.nodes:
             #envia pra todo mundo menos pra sí mesmo
             if Utils.ipsAreInTheSameNetwork(arp.IP_src, n.ip_prefix) and n.ip_prefix != arp.IP_src:
@@ -30,7 +30,7 @@ def sendArp(pkg, topology):
 
 
     else: # send to a specific mac address ARP REPLY
-        #print(pkg.src_name +" ->> "+ pkg.dst_name +" : ARP Reply<br/>"+ arp.IP_src.split("/")[0] +" is at "+ arp.MAC_src)
+        print(topology.nodes_names[pkg.MAC_src] +" ->> "+ topology.nodes_names[pkg.MAC_dst] +" : ARP Reply<br/>"+ arp.IP_src.split("/")[0] +" is at "+ arp.MAC_src)
         for n in topology.nodes:
             if (n.mac == arp.MAC_dst):
                 receive(n, pkg, topology)
@@ -55,15 +55,14 @@ def sendIp(pkg, topology):
                     break
 
 def receive(node, pkg, topology):
-    
     if pkg.isArp():
         receiveArp(node, pkg, topology)
     elif pkg.isIp():
         receiveIp(node, pkg, topology)
 
 def receiveArp(node, pkg, topology):
-    print("NODE: " + str(node) + " RECEIVED PKG: ")
-    print(pkg)
+    # print("NODE: " + str(node) + " RECEIVED PKG: ")
+    # print(pkg)
     
     arp = pkg.unpack()
     if arp.isArpRequest():
@@ -76,10 +75,20 @@ def receiveArp(node, pkg, topology):
         node.arp_table[arp.IP_src] = arp.MAC_src
 
 def receiveIp(node, pkg, topology):
-    print("NODE: " + str(node) + " RECEIVED PKG: ")
-    print(pkg)
-
+    # print("NODE: " + str(node) + " RECEIVED PKG: ")
+    # print(pkg)
     ip = pkg.unpack()
+    if ip.unpack().typeMessage == Protocols.ICMPType.CONSULTA: 
+        if ip.unpack().code == Protocols.ICMPCode.ECHO_REQUEST:
+            print(topology.nodes_names[pkg.MAC_src] + " ->> " + topology.nodes_names[pkg.MAC_dst] +
+            " : ICMP Echo Request<br/>src=" + ip.IP_src.split("/")[0] +" dst=" + ip.IP_dst.split("/")[0] +" ttl=" + str(ip.ttl))
+        else:
+            print(topology.nodes_names[pkg.MAC_src] + " ->> " + topology.nodes_names[pkg.MAC_dst] +
+            " : ICMP Echo Reply<br/>src=" + ip.IP_src.split("/")[0] +" dst=" + ip.IP_dst.split("/")[0] +" ttl=" + str(ip.ttl))
+    else:
+        print(topology.nodes_names[pkg.MAC_src] + " ->> " + topology.nodes_names[pkg.MAC_dst] +
+            " : ICMP Time Exceeded<br/>src=" + ip.IP_src.split("/")[0] +" dst=" + ip.IP_dst.split("/")[0] +" ttl=" + str(ip.ttl))
+    
     # TTL = 0 Send icmp timeout to ip.ip_source
     if ip.ttl == 0 and ip.protocolType == "ICMP":
         ip = Protocols.IP(node.ip_prefix, ip.IP_src, "ICMP", Protocols.ICMP(Protocols.ICMPType.NOTIFICAO_DE_ERRO, Protocols.ICMPCode.TIME_EXEEDED))

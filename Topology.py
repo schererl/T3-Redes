@@ -1,9 +1,10 @@
 class Topology:
-    def __init__(self, nodes, routers, routertable):
+    def __init__(self, nodes, routers, routertable, nodes_names):
         self.nodes = nodes
         self.routers = routers
         self.routertable = routertable
-        self.node_names = {}
+        self.nodes_names = nodes_names
+
     def check_if_node_is_router(self, node):
         for router in self.routers:
             if node in router.node_routers:
