@@ -1,14 +1,52 @@
+import sys
 import Utils
 import Network
 import Protocols
 
-from Topology import Node
-from Topology import Router
-from Topology import Routertable
-from Topology import Topology
+
+def ping(nodeOrigem, nodeDestino, topologia):
+    dst_ip = None
+    if Utils.ipsAreInTheSameNetwork(nodeOrigem.ip_prefix, nodeDestino.ip_prefix):
+        dst_ip = nodeDestino.ip_prefix
+    else:
+        dst_ip = nodeOrigem.gateway + "/" +nodeOrigem.ip_prefix.split("/")[1]
+
+    ARP_packet = Protocols.ARP_Request(nodeOrigem, dst_ip)
+    Ethernet_packet = Protocols.Ethernet(nodeOrigem.mac, ":FF", "ARP", ARP_packet)
+    Network.send(Ethernet_packet, topo)
+
+    icmp_pkg = Protocols.ICMP_Echo_Request()
+    ip_package = Protocols.IP(nodeOrigem.ip_prefix, nodeDestino.ip_prefix, "ICMP", icmp_pkg)
+    eth_packet = Protocols.Ethernet(nodeOrigem.mac, nodeOrigem.arp_table[dst_ip], "IP", ip_package)
+    Network.send(eth_packet, topo)
 
 
-topo = Utils.readTopologyFile("topologia.txt")
+# le linha de comando
+arqTopologia = sys.argv[1]
+comando = sys.argv[2]
+origem = sys.argv[3]
+destino = sys.argv[4]
+
+topo = Utils.readTopologyFile(arqTopologia)
+nOrigem = [p for p in topo.nodes if p.name == origem][0]
+nDestino = [p for p in topo.nodes if p.name == destino][0]
+
+if comando == "ping":
+    ping(nOrigem, nDestino, topo)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #TODO: testes a fazer
 #   3 perguntar pro professor sobre subredes e uso de máscaras nos gateways
