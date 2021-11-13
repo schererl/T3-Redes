@@ -7,9 +7,9 @@ from Topology import Topology
 
 def send(pkg, topology):
     if pkg.isArp():
-        sendArp(pkg, topology)
+        return sendArp(pkg, topology)
     elif pkg.isIp():
-        sendIp(pkg, topology)
+        return sendIp(pkg, topology)
 
 def sendArp(pkg, topology):
     arp = pkg.unpack()
@@ -20,45 +20,42 @@ def sendArp(pkg, topology):
         for n in topology.nodes:
             #envia pra todo mundo menos pra sí mesmo
             if Utils.ipsAreInTheSameNetwork(arp.IP_src, n.ip_prefix) and n.ip_prefix != arp.IP_src:
-                receive(n, pkg, topology)
+                res = receive(n, pkg, topology)
+                if res != None:
+                    return res
                 
         for router in topology.routers:
             for n in router.node_routers:
             #envia pra todo mundo menos pra sí mesmo
                 if Utils.ipsAreInTheSameNetwork(arp.IP_src, n.ip_prefix) and n.ip_prefix != arp.IP_src:
-                    receive(n, pkg, topology)
-
+                    res = receive(n, pkg, topology)
+                    if res != None:
+                        return res
 
     else: # send to a specific mac address ARP REPLY
         print(topology.nodes_names[pkg.MAC_src] +" ->> "+ topology.nodes_names[pkg.MAC_dst] +" : ARP Reply<br/>"+ arp.IP_src.split("/")[0] +" is at "+ arp.MAC_src)
         for n in topology.nodes:
             if (n.mac == arp.MAC_dst):
-                receive(n, pkg, topology)
-                break
-
+                return receive(n, pkg, topology)
         for router in topology.routers:
             for n in router.node_routers:
-                
                 if (n.mac == arp.MAC_dst):
-                    receive(n, pkg, topology)
-                    break
+                    return receive(n, pkg, topology)
 
 def sendIp(pkg, topology):
     for n in topology.nodes:
         if (n.mac == pkg.MAC_dst):
-            receive(n, pkg, topology)
-            break
+            return receive(n, pkg, topology)
     for router in topology.routers:
             for n in router.node_routers:
                 if (n.mac == pkg.MAC_dst):
-                    receive(n, pkg, topology)
-                    break
+                    return receive(n, pkg, topology)
 
 def receive(node, pkg, topology):
     if pkg.isArp():
-        receiveArp(node, pkg, topology)
+        return receiveArp(node, pkg, topology)
     elif pkg.isIp():
-        receiveIp(node, pkg, topology)
+        return receiveIp(node, pkg, topology)
 
 def receiveArp(node, pkg, topology):
     # print("NODE: " + str(node) + " RECEIVED PKG: ")
@@ -70,7 +67,7 @@ def receiveArp(node, pkg, topology):
             node.arp_table[arp.IP_src] = arp.MAC_src
             new_ARP_pkg = Protocols.ARP_Reply(node, arp) #source é o nodo e o destino é o source do que está no package
             new_Eth_pkg = Protocols.Ethernet(new_ARP_pkg.MAC_src, new_ARP_pkg.MAC_dst, "ARP" , new_ARP_pkg)
-            send(new_Eth_pkg, topology)
+            return send(new_Eth_pkg, topology)
     elif arp.isArpReply():
         node.arp_table[arp.IP_src] = arp.MAC_src
 
@@ -78,6 +75,10 @@ def receiveIp(node, pkg, topology):
     # print("NODE: " + str(node) + " RECEIVED PKG: ")
     # print(pkg)
     ip = pkg.unpack()
+    # TTL = 0 Send icmp timeout to ip.ip_source
+    # if ip.ttl == 0 and ip.protocolType == "ICMP":
+    #     ip = Protocols.IP(node.ip_prefix, ip.IP_src, "ICMP", Protocols.ICMP(Protocols.ICMPType.NOTIFICAO_DE_ERRO, Protocols.ICMPCode.TIME_EXCEED))
+
     if ip.unpack().typeMessage == Protocols.ICMPType.CONSULTA: 
         if ip.unpack().code == Protocols.ICMPCode.ECHO_REQUEST:
             print(topology.nodes_names[pkg.MAC_src] + " ->> " + topology.nodes_names[pkg.MAC_dst] +
@@ -88,22 +89,18 @@ def receiveIp(node, pkg, topology):
     else:
         print(topology.nodes_names[pkg.MAC_src] + " ->> " + topology.nodes_names[pkg.MAC_dst] +
             " : ICMP Time Exceeded<br/>src=" + ip.IP_src.split("/")[0] +" dst=" + ip.IP_dst.split("/")[0] +" ttl=" + str(ip.ttl))
-    
-    # TTL = 0 Send icmp timeout to ip.ip_source
-    if ip.ttl == 0 and ip.protocolType == "ICMP":
-        ip = Protocols.IP(node.ip_prefix, ip.IP_src, "ICMP", Protocols.ICMP(Protocols.ICMPType.NOTIFICAO_DE_ERRO, Protocols.ICMPCode.TIME_EXEEDED))
 
     # if the node that received the pkg isnt in the same network of ip_destiny there is two option:
     #   1 the node must redirect its message to its gateway
     #   2 the node is a gateway and it must search on router_table where it must sends the package
     if not Utils.ipsAreInTheSameNetwork(node.ip_prefix, ip.IP_dst):
         if topology.check_if_node_is_router(node):
-            redirect_newtwork(node, ip, topology)
+            return redirect_newtwork(node, ip, topology)
         else:
-            redirect_default_gateway(node, ip, topology)
+            return redirect_default_gateway(node, ip, topology)
 
     else: # else the package has arrived to its destiny
-        receiveICMP(node, pkg, topology) # unpack icmp
+        return receiveICMP(node, pkg, topology) # unpack icmp
 
 def receiveICMP(node, pkg, topology):
     ip = pkg.unpack()
@@ -124,21 +121,19 @@ def receiveICMP(node, pkg, topology):
             #   1 node.ip and new_ip_destiny are from  different networks, must send to node's gateway
             #   2 the node and new_ip_destiny are from the same network, send echo reply directply to destiny
             if not Utils.ipsAreInTheSameNetwork(new_ip_src, new_ip_dst):
-                redirect_default_gateway(node, IP_packet, topology)
+                return redirect_default_gateway(node, IP_packet, topology)
             else:
                 if not ip.IP_src in node.arp_table:
                     ARP_packet = Protocols.ARP_Request(node, ip.IP_src)
                     Ethernet_packet = Protocols.Ethernet(node.mac, ":FF", "ARP", ARP_packet)
                     send(Ethernet_packet, topology)
                 eth_packet = Protocols.Ethernet(node.mac, node.arp_table[ip.IP_src], "IP", IP_packet)
-                send(eth_packet, topology)
+                return send(eth_packet, topology)
 
         elif icmp.code == Protocols.ICMPCode.ECHO_REPLY:
-            #message received do something here
-            return
+            return Protocols.ICMPCode.ECHO_REPLY
     else:
-        #message received do something here
-        return
+        return Protocols.ICMPCode.TIME_EXCEED
 
 #redirects the mac_destiny to gatey's mac
 def redirect_default_gateway(node, ip, topology):
@@ -149,7 +144,7 @@ def redirect_default_gateway(node, ip, topology):
         
     
     Ethernet_packet = Protocols.Ethernet(node.mac, node.arp_table[dst_ip], "IP", ip)
-    send(Ethernet_packet, topology)
+    return send(Ethernet_packet, topology)
     
 #redirects to another network using the router
 def redirect_newtwork(node, ip, topology):
@@ -175,37 +170,15 @@ def redirect_newtwork(node, ip, topology):
                 arp_ip = rt_interface + Utils.getMask(router_node.ip_prefix) # next mac is the next hop
 
             IP_packet = Protocols.IP(ip.IP_src, ip.IP_dst, "ICMP", ip.data, ip.ttl-1) #decrementa ttl já que passou por um roteador
-                
+
+            if IP_packet.ttl == 0 and IP_packet.protocolType == "ICMP":
+                IP_packet = Protocols.IP(ip.IP_dst, ip.IP_src, "ICMP", Protocols.ICMP(Protocols.ICMPType.NOTIFICAO_DE_ERRO, Protocols.ICMPCode.TIME_EXCEED))
+                Ethernet_packet = Protocols.Ethernet(router_node.mac, router.arp_table[ip.IP_src], "IP", IP_packet)
+                return send(Ethernet_packet, topology)
+            
             if not arp_ip in router.arp_table:
                 ARP_packet = Protocols.ARP_Request(router_node, arp_ip)
                 Ethernet_packet = Protocols.Ethernet(router_node.mac, ":FF", "ARP", ARP_packet)
                 send(Ethernet_packet, topology)
-            
             Ethernet_packet = Protocols.Ethernet(router_node.mac, router.arp_table[arp_ip], "IP", IP_packet)
-            send(Ethernet_packet, topology)
-            
-            '''    
-                #envia ICMP direto para o destino
-                if not ip.IP_dst in router.arp_table:
-                    ARP_packet = Protocols.ARP_Request(router_node, ip.IP_dst)
-                    Ethernet_packet = Protocols.Ethernet(router_node.mac, ":FF", "ARP", ARP_packet)
-                    send(Ethernet_packet, topology)
-                IP_packet = Protocols.IP(ip.IP_src, ip.IP_dst, "ICMP", ip.data, ip.ttl-1) #decrementa ttl já que passou por um roteador
-                Ethernet_packet = Protocols.Ethernet(router_node.mac, router.arp_table[ip.IP_dst], "IP", IP_packet)
-                send(Ethernet_packet, topology)
-                return
-            else:
-                #envia ICMP para o proximo hop
-                hop_ip = rt_interface + Utils.getMask(router_node.ip_prefix)
-                
-                if not hop_ip in router.arp_table:
-                    ARP_packet = Protocols.ARP_Request(router_node, hop_ip)
-                    Ethernet_packet = Protocols.Ethernet(router_node.mac, ":FF", "ARP", ARP_packet)
-                    send(Ethernet_packet, topology)
-                
-                IP_packet = Protocols.IP(ip.IP_src, ip.IP_dst, "ICMP", ip.data, ip.ttl-1) #decrementa ttl já que passou por um roteador
-                Ethernet_packet = Protocols.Ethernet(router_node.mac, router.arp_table[hop_ip], "IP", IP_packet)
-                send(Ethernet_packet, topology)
-                return
-            '''
-
+            return send(Ethernet_packet, topology)

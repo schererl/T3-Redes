@@ -56,7 +56,7 @@ class ICMPType(Enum):
     CONSULTA = 2
 
 class ICMPCode(Enum):
-    TIME_EXEEDED = 11
+    TIME_EXCEED = 11
     ECHO_REQUEST = 8
     ECHO_REPLY = 0
 
@@ -66,7 +66,7 @@ class ICMP:
         self.code = code
     def __str__(self):
         output_msg = ""
-        if self.code == ICMPCode.TIME_EXEEDED:
+        if self.code == ICMPCode.TIME_EXCEED:
             output_msg = "TIME EXCEEDED"
         elif self.code == ICMPCode.ECHO_REQUEST:
             output_msg = "ECHO_REQUEST"
