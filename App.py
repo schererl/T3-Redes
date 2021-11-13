@@ -48,7 +48,7 @@ origem = sys.argv[3]
 destino = sys.argv[4]
 
 topo = Utils.readTopologyFile(arqTopologia)
-nOrigem = [p for p in topo.nodes if p.name == origem][0]
+nOrigem = [p for p in topo.nodes if p.name == origem][0] 
 nDestino = [p for p in topo.nodes if p.name == destino][0]
 
 if comando == "ping":

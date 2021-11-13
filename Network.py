@@ -75,10 +75,7 @@ def receiveIp(node, pkg, topology):
     # print("NODE: " + str(node) + " RECEIVED PKG: ")
     # print(pkg)
     ip = pkg.unpack()
-    # TTL = 0 Send icmp timeout to ip.ip_source
-    # if ip.ttl == 0 and ip.protocolType == "ICMP":
-    #     ip = Protocols.IP(node.ip_prefix, ip.IP_src, "ICMP", Protocols.ICMP(Protocols.ICMPType.NOTIFICAO_DE_ERRO, Protocols.ICMPCode.TIME_EXCEED))
-
+    
     if ip.unpack().typeMessage == Protocols.ICMPType.CONSULTA: 
         if ip.unpack().code == Protocols.ICMPCode.ECHO_REQUEST:
             print(topology.nodes_names[pkg.MAC_src] + " ->> " + topology.nodes_names[pkg.MAC_dst] +
@@ -89,7 +86,11 @@ def receiveIp(node, pkg, topology):
     else:
         print(topology.nodes_names[pkg.MAC_src] + " ->> " + topology.nodes_names[pkg.MAC_dst] +
             " : ICMP Time Exceeded<br/>src=" + ip.IP_src.split("/")[0] +" dst=" + ip.IP_dst.split("/")[0] +" ttl=" + str(ip.ttl))
-
+    '''
+    # TTL = 0 Send icmp timeout to ip.ip_source
+    if ip.ttl == 0 and ip.protocolType == "ICMP":
+        ip = Protocols.IP(node.ip_prefix, ip.IP_src, "ICMP", Protocols.ICMP(Protocols.ICMPType.NOTIFICAO_DE_ERRO, Protocols.ICMPCode.TIME_EXCEED))
+    '''
     # if the node that received the pkg isnt in the same network of ip_destiny there is two option:
     #   1 the node must redirect its message to its gateway
     #   2 the node is a gateway and it must search on router_table where it must sends the package
@@ -151,6 +152,21 @@ def redirect_newtwork(node, ip, topology):
     router = topology.get_router_by_node(node)
     IP_packet = None
 
+    
+    if ip.ttl-1 == 0 and ip.protocolType == "ICMP":
+        IP_packet = Protocols.IP(node.ip_prefix, ip.IP_src, "ICMP", Protocols.ICMP(Protocols.ICMPType.NOTIFICAO_DE_ERRO, Protocols.ICMPCode.TIME_EXCEED))
+        
+        if not Utils.ipsAreInTheSameNetwork(IP_packet.IP_src, IP_packet.IP_dst):
+            return redirect_newtwork(node, IP_packet, topology)
+        else:
+            if not IP_packet.IP_dst in node.arp_table:
+                ARP_packet = Protocols.ARP_Request(node, IP_packet.IP_dst)
+                Ethernet_packet = Protocols.Ethernet(node.mac, ":FF", "ARP", ARP_packet)
+                send(Ethernet_packet, topology)
+
+            Ethernet_packet = Protocols.Ethernet(node.mac, node.arp_table[IP_packet.IP_dst], "IP", IP_packet)
+            return send(Ethernet_packet, topology)
+    
     for rt_line in range(topology.routertable.size): 
         rt_name = topology.routertable.name[rt_line]
         rt_ip = topology.routertable.dest_prefix[rt_line]
@@ -171,11 +187,6 @@ def redirect_newtwork(node, ip, topology):
 
             IP_packet = Protocols.IP(ip.IP_src, ip.IP_dst, "ICMP", ip.data, ip.ttl-1) #decrementa ttl já que passou por um roteador
 
-            if IP_packet.ttl == 0 and IP_packet.protocolType == "ICMP":
-                IP_packet = Protocols.IP(ip.IP_dst, ip.IP_src, "ICMP", Protocols.ICMP(Protocols.ICMPType.NOTIFICAO_DE_ERRO, Protocols.ICMPCode.TIME_EXCEED))
-                Ethernet_packet = Protocols.Ethernet(router_node.mac, router.arp_table[ip.IP_src], "IP", IP_packet)
-                return send(Ethernet_packet, topology)
-            
             if not arp_ip in router.arp_table:
                 ARP_packet = Protocols.ARP_Request(router_node, arp_ip)
                 Ethernet_packet = Protocols.Ethernet(router_node.mac, ":FF", "ARP", ARP_packet)
