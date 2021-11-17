@@ -57,6 +57,7 @@ class Router:
 
         for router in node_routers:
             self.node_routers.append(Node(name, router[0], router[1], None, self.arp_table))
+        
 
     def __str__(self):
         

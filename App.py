@@ -32,12 +32,12 @@ def traceroute(nodeOrigem, nodeDestino, topologia):
     Network.send(Ethernet_packet, topo)
 
     ttlCounter = 1
-    while True:
+    while ttlCounter <= 8:
         icmp_pkg = Protocols.ICMP_Echo_Request()
         ip_package = Protocols.IP(nodeOrigem.ip_prefix, nodeDestino.ip_prefix, "ICMP", icmp_pkg, ttl=ttlCounter)
         eth_packet = Protocols.Ethernet(nodeOrigem.mac, nodeOrigem.arp_table[dst_ip], "IP", ip_package)
         res = Network.send(eth_packet, topo)
-        if res == Protocols.ICMPCode.ECHO_REPLY:
+        if res == Protocols.ICMPCode.ECHO_REPLY or res == None:
             break
         ttlCounter += 1
 
@@ -48,8 +48,11 @@ origem = sys.argv[3]
 destino = sys.argv[4]
 
 topo = Utils.readTopologyFile(arqTopologia)
+print(topo)
 nOrigem = [p for p in topo.nodes if p.name == origem][0] 
 nDestino = [p for p in topo.nodes if p.name == destino][0]
+
+
 
 if comando == "ping":
     ping(nOrigem, nDestino, topo)

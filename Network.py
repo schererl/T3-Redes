@@ -86,11 +86,7 @@ def receiveIp(node, pkg, topology):
     else:
         print(topology.nodes_names[pkg.MAC_src] + " ->> " + topology.nodes_names[pkg.MAC_dst] +
             " : ICMP Time Exceeded<br/>src=" + ip.IP_src.split("/")[0] +" dst=" + ip.IP_dst.split("/")[0] +" ttl=" + str(ip.ttl))
-    '''
-    # TTL = 0 Send icmp timeout to ip.ip_source
-    if ip.ttl == 0 and ip.protocolType == "ICMP":
-        ip = Protocols.IP(node.ip_prefix, ip.IP_src, "ICMP", Protocols.ICMP(Protocols.ICMPType.NOTIFICAO_DE_ERRO, Protocols.ICMPCode.TIME_EXCEED))
-    '''
+    
     # if the node that received the pkg isnt in the same network of ip_destiny there is two option:
     #   1 the node must redirect its message to its gateway
     #   2 the node is a gateway and it must search on router_table where it must sends the package
@@ -146,18 +142,19 @@ def redirect_default_gateway(node, ip, topology):
     
     Ethernet_packet = Protocols.Ethernet(node.mac, node.arp_table[dst_ip], "IP", ip)
     return send(Ethernet_packet, topology)
-    
-#redirects to another network using the router
-def redirect_newtwork(node, ip, topology):
+
+def redirect_newtwork(node, ip, topology, discount = True):
     router = topology.get_router_by_node(node)
     IP_packet = None
 
     
     if ip.ttl-1 == 0 and ip.protocolType == "ICMP":
-        IP_packet = Protocols.IP(node.ip_prefix, ip.IP_src, "ICMP", Protocols.ICMP(Protocols.ICMPType.NOTIFICAO_DE_ERRO, Protocols.ICMPCode.TIME_EXCEED))
+        if ip.data.code == Protocols.ICMPCode.TIME_EXCEED: # if is already a time exceeded the package is discarded
+            return None
         
+        IP_packet = Protocols.IP(node.ip_prefix, ip.IP_src, "ICMP", Protocols.ICMP(Protocols.ICMPType.NOTIFICAO_DE_ERRO, Protocols.ICMPCode.TIME_EXCEED),8)
         if not Utils.ipsAreInTheSameNetwork(IP_packet.IP_src, IP_packet.IP_dst):
-            return redirect_newtwork(node, IP_packet, topology)
+            return redirect_newtwork(node, IP_packet, topology, False)
         else:
             if not IP_packet.IP_dst in node.arp_table:
                 ARP_packet = Protocols.ARP_Request(node, IP_packet.IP_dst)
@@ -166,30 +163,39 @@ def redirect_newtwork(node, ip, topology):
 
             Ethernet_packet = Protocols.Ethernet(node.mac, node.arp_table[IP_packet.IP_dst], "IP", IP_packet)
             return send(Ethernet_packet, topology)
-    
-    for rt_line in range(topology.routertable.size): 
-        rt_name = topology.routertable.name[rt_line]
-        rt_ip = topology.routertable.dest_prefix[rt_line]
-        rt_interface = topology.routertable.nexthop[rt_line]
-        rt_porta = topology.routertable.port[rt_line]
+    else:
+        for rt_line in range(topology.routertable.size): 
+            rt_name = topology.routertable.name[rt_line]
+            rt_ip = topology.routertable.dest_prefix[rt_line]
+            rt_interface = topology.routertable.nexthop[rt_line]
+            rt_porta = topology.routertable.port[rt_line]
 
-        # search for the right line at router_table (same name and same network from ip_destiny)
-        if rt_name == node.name and Utils.ipsAreInTheSameNetwork(ip.IP_dst, rt_ip):
-            router_node = router.node_routers[int(rt_porta)] # get the right node form router by the port number at router_table
-            arp_ip = None
-            
-            #two options: 1) next network is the same of the destiny
-                        # 2) must use the hop to the next network pointed as the one that you must go to achieve destiny's network
-            if rt_interface == "0.0.0.0": 
-                arp_ip = ip.IP_dst # next mac is the destiny 
-            else:
-                arp_ip = rt_interface + Utils.getMask(router_node.ip_prefix) # next mac is the next hop
+            # search for the right line at router_table (same name and same network from ip_destiny)
+            if rt_name == node.name and Utils.ipsAreInTheSameNetwork(rt_ip, ip.IP_dst):
+                router_node = router.node_routers[int(rt_porta)] # get the right node form router by the port number at router_table
+                arp_ip = None
 
-            IP_packet = Protocols.IP(ip.IP_src, ip.IP_dst, "ICMP", ip.data, ip.ttl-1) #decrementa ttl já que passou por um roteador
+                #two options: 1) next network is the same of the destiny
+                            # 2) must use the hop to the next network pointed as the one that you must go to achieve destiny's network
+                if rt_interface == "0.0.0.0": 
+                    arp_ip = ip.IP_dst # next mac is the destiny 
+                else:
+                    arp_ip = rt_interface + Utils.getMask(router_node.ip_prefix) # next mac is the next hop
 
-            if not arp_ip in router.arp_table:
-                ARP_packet = Protocols.ARP_Request(router_node, arp_ip)
-                Ethernet_packet = Protocols.Ethernet(router_node.mac, ":FF", "ARP", ARP_packet)
-                send(Ethernet_packet, topology)
-            Ethernet_packet = Protocols.Ethernet(router_node.mac, router.arp_table[arp_ip], "IP", IP_packet)
-            return send(Ethernet_packet, topology)
+                # TODO: arrumar isso: primeira solução para o ttl e ip_src errados quando é enviado pelo primeiro roteador a mensagem de time_exceeded
+                ttl = ip.ttl
+                if discount == True:
+                    ttl -=1
+                    IP_packet = Protocols.IP(ip.IP_src, ip.IP_dst, "ICMP", ip.data, ttl) #decrementa ttl já que passou por um roteador
+                else:
+                    ip_src = router_node.ip_prefix #define ip source como do 
+                    IP_packet = Protocols.IP(ip_src, ip.IP_dst, "ICMP", ip.data, ttl)
+
+
+                
+                if not arp_ip in router.arp_table:
+                    ARP_packet = Protocols.ARP_Request(router_node, arp_ip)
+                    Ethernet_packet = Protocols.Ethernet(router_node.mac, ":FF", "ARP", ARP_packet)
+                    send(Ethernet_packet, topology)
+                Ethernet_packet = Protocols.Ethernet(router_node.mac, router.arp_table[arp_ip], "IP", IP_packet)
+                return send(Ethernet_packet, topology)
