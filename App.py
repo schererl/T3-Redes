@@ -48,7 +48,6 @@ origem = sys.argv[3]
 destino = sys.argv[4]
 
 topo = Utils.readTopologyFile(arqTopologia)
-print(topo)
 nOrigem = [p for p in topo.nodes if p.name == origem][0] 
 nDestino = [p for p in topo.nodes if p.name == destino][0]
 
